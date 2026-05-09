@@ -17,7 +17,7 @@ const handleUploadPdf = async (req: Request , res: Response) =>{
 
         res.status(200).json({message : "File uploaded and indexed successfully", path: file.path});
     } catch (error) {
-        console.log("Error in UploadRouter.ts : handleUploadPdf : ", JSON.stringify(error));
+        console.log("Error in UploadRouter.ts : handleUploadPdf : ", error);
         return res.status(500).json({message : "Internal server error"});
     }
 }

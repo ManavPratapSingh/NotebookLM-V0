@@ -16,6 +16,7 @@ export const indexing = async (filepath: string) => {
     const docs: Document[] = await loader.load();
 
     const embeddings: GoogleGenerativeAIEmbeddings = new GoogleGenerativeAIEmbeddings({
+        apiKey: API_KEY,
         model: "gemini-embedding-001",
     });
 
@@ -30,6 +31,7 @@ export const indexing = async (filepath: string) => {
 
 export const retrieval = async (userQuery: string) => {
     const embeddings: GoogleGenerativeAIEmbeddings = new GoogleGenerativeAIEmbeddings({
+        apiKey : API_KEY,
         model: "gemini-embedding-001",
     });
 
@@ -61,11 +63,13 @@ export const generation = async (retrievedDocuments: Document[], userQuery: stri
     })
 
     const response: GenerateContentResponse = await genai.models.generateContent({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         contents: [
-            { role: "system", parts: [{ text: system_prompt }] },
             { role: "user", parts: [{ text: userQuery }] }
-        ]
+        ],
+        config : {
+            systemInstruction: system_prompt,
+        }
     })
 
     return response.text;
