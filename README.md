@@ -108,6 +108,8 @@ Create a `.env` file in the project root:
 ```env
 PORT=8000
 GEMINI_API_KEY=your_gemini_api_key_here
+QDRANT_URL=your_qdrant_cloud_url_here
+QDRANT_API_KEY=your_qdrant_api_key_here
 ```
 
 ### 3. Start Qdrant
