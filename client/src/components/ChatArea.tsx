@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles } from 'lucide-react';
 import axios from 'axios';
-import gsap from 'gsap';
 
 interface ChatAreaProps {
   messages: { role: 'user' | 'assistant'; content: string }[];
