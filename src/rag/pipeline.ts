@@ -6,6 +6,7 @@ if (!API_KEY) throw new Error("API Key not found");
 
 import { GenerateContentResponse, GoogleGenAI } from "@google/genai";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
+import { CSVLoader } from "@langchain/community/document_loaders/fs/csv";
 import type { Document } from "@langchain/core/documents";
 import type { VectorStoreRetriever } from "@langchain/core/vectorstores";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
@@ -26,6 +27,61 @@ export const indexing = async (filepath: string) => {
     });
 
     console.log("Indexing completed");
+
+}
+
+export const csvIndexing = async (filepath: string) => {
+    const loader: CSVLoader = new CSVLoader(filepath);
+    const rawDocs: Document[] = await loader.load();
+
+    // Filter out empty documents (blank rows / trailing newlines in CSV)
+    const docs: Document[] = rawDocs.filter(doc => doc.pageContent.trim().length > 0);
+
+    console.log(`CSV: Loaded ${rawDocs.length} raw docs, ${docs.length} after filtering empty ones`);
+
+    if (docs.length === 0) {
+        throw new Error("CSV file has no valid content to index");
+    }
+
+    // Log a sample so we can diagnose content issues
+    console.log(`Sample doc[0] pageContent (first 300 chars):\n"${docs[0] && docs[0].pageContent.substring(0, 300)}"`);
+
+    const embeddings: GoogleGenerativeAIEmbeddings = new GoogleGenerativeAIEmbeddings({
+        apiKey: API_KEY,
+        model: "gemini-embedding-001",
+    });
+
+    // Manually embed first so we can inspect & filter 0-dim vectors
+    const texts: string[] = docs.map(d => d.pageContent);
+    const vectors: number[][] = await embeddings.embedDocuments(texts);
+
+    console.log(`Embedding dimensions per doc: ${vectors.map(v => v.length).join(", ")}`);
+
+    // Keep only docs whose embedding has the expected dimension (3072 for gemini-embedding-001)
+    const validPairs: { doc: Document; vector: number[] }[] = [];
+    for (let i = 0; i < docs.length; i++) {
+        if (vectors[i].length > 0) {
+            validPairs.push({ doc: docs[i], vector: vectors[i] });
+        } else {
+            console.warn(`Skipping doc ${i} — embedding returned 0 dimensions. Content: "${docs[i].pageContent.substring(0, 100)}"`);
+        }
+    }
+
+    if (validPairs.length === 0) {
+        throw new Error("No documents produced valid embeddings");
+    }
+
+    const vectorStore: QdrantVectorStore = await QdrantVectorStore.fromExistingCollection(embeddings, {
+        url: "http://localhost:6333",
+        collectionName: "NotebookLM-vectorspace"
+    });
+
+    await vectorStore.addVectors(
+        validPairs.map(p => p.vector),
+        validPairs.map(p => p.doc)
+    );
+
+    console.log(`CSV Indexing completed — indexed ${validPairs.length}/${docs.length} documents`);
 
 }
 

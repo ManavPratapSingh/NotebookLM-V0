@@ -1,6 +1,6 @@
 import { Router , type Request , type Response } from "express";
 import upload from "./MulterMiddleware.js";
-import { indexing } from "../rag/pipeline.js";
+import { indexing, csvIndexing } from "../rag/pipeline.js";
 
 const router : Router = Router();
 
@@ -22,6 +22,24 @@ const handleUploadPdf = async (req: Request , res: Response) =>{
     }
 }
 
+const handleUploadCsv = async (req: Request , res: Response) =>{
+    try {
+        const file : Express.Multer.File | undefined = req.file;
+        if(!file){
+            return res.status(400).json({message : "No file uploaded"});
+        }
+
+        // Trigger CSV indexing immediately after upload
+        await csvIndexing(file.path);
+
+        res.status(200).json({message : "CSV file uploaded and indexed successfully", path: file.path});
+    } catch (error) {
+        console.log("Error in UploadRouter.ts : handleUploadCsv : ", error);
+        return res.status(500).json({message : "Internal server error"});
+    }
+}
+
 router.post("/upload-pdf" , upload.single("file") , handleUploadPdf);
+router.post("/upload-csv" , upload.single("file") , handleUploadCsv);
 
 export default router;

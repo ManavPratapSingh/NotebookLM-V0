@@ -20,6 +20,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ documents, onUpload, onUploadP
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Determine the correct endpoint based on file extension
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    let uploadUrl: string;
+
+    if (extension === 'pdf') {
+      uploadUrl = 'http://localhost:8000/api/upload-pdf';
+    } else if (extension === 'csv') {
+      uploadUrl = 'http://localhost:8000/api/upload-csv';
+    } else {
+      console.error('Unsupported file type:', extension);
+      onUploadProgress({
+        filename: file.name,
+        progress: 100,
+        status: 'error',
+      });
+      return;
+    }
+
     const formData = new FormData();
     formData.append('file', file);
 
@@ -31,7 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ documents, onUpload, onUploadP
     });
 
     try {
-      await axios.post('http://localhost:8000/api/upload-pdf', formData, {
+      await axios.post(uploadUrl, formData, {
         onUploadProgress: (progressEvent) => {
           const percent = progressEvent.total
             ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
@@ -74,13 +92,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ documents, onUpload, onUploadP
       >
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
         <Plus size={20} className="group-hover:rotate-90 transition-transform duration-500" />
-        <span className="font-medium">UPLOAD PDF</span>
+        <span className="font-medium">UPLOAD FILE</span>
         <input 
           type="file" 
           ref={fileInputRef} 
           onChange={handleFileChange} 
           className="hidden" 
-          accept=".pdf"
+          accept=".pdf,.csv"
         />
       </button>
 
