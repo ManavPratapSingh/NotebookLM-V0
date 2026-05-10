@@ -60,10 +60,13 @@ export const csvIndexing = async (filepath: string) => {
     // Keep only docs whose embedding has the expected dimension (3072 for gemini-embedding-001)
     const validPairs: { doc: Document; vector: number[] }[] = [];
     for (let i = 0; i < docs.length; i++) {
-        if (vectors[i].length > 0) {
-            validPairs.push({ doc: docs[i], vector: vectors[i] });
+        const vec = vectors[i];
+        const doc = docs[i];
+        if (!vec || !doc) continue;
+        if (vec.length > 0) {
+            validPairs.push({ doc, vector: vec });
         } else {
-            console.warn(`Skipping doc ${i} — embedding returned 0 dimensions. Content: "${docs[i].pageContent.substring(0, 100)}"`);
+            console.warn(`Skipping doc ${i} — embedding returned 0 dimensions. Content: "${doc.pageContent.substring(0, 100)}"`);
         }
     }
 
