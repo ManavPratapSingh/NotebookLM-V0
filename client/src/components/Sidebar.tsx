@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { FileText, Plus } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 import { type UploadState } from './UploadProgress';
 
 interface SidebarProps {
@@ -25,9 +26,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ documents, onUpload, onUploadP
     let uploadUrl: string;
 
     if (extension === 'pdf') {
-      uploadUrl = 'http://localhost:8000/api/upload-pdf';
+      uploadUrl = `${API_BASE_URL}/api/upload-pdf`;
     } else if (extension === 'csv') {
-      uploadUrl = 'http://localhost:8000/api/upload-csv';
+      uploadUrl = `${API_BASE_URL}/api/upload-csv`;
     } else {
       console.error('Unsupported file type:', extension);
       onUploadProgress({

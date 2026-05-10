@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
 interface ChatAreaProps {
   messages: { role: 'user' | 'assistant'; content: string }[];
@@ -27,7 +28,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, setMessages }) => 
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8000/api/rag/query', {
+      const response = await axios.post(`${API_BASE_URL}/api/rag/query`, {
         userQuery: userMessage
       });
       
