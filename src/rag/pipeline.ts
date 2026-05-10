@@ -11,6 +11,7 @@ import type { Document } from "@langchain/core/documents";
 import type { VectorStoreRetriever } from "@langchain/core/vectorstores";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { QdrantVectorStore } from "@langchain/qdrant";
+import { client } from "../Qdrant.config.js";
 
 export const indexing = async (filepath: string) => {
     const loader: PDFLoader = new PDFLoader(filepath);
@@ -22,7 +23,7 @@ export const indexing = async (filepath: string) => {
     });
 
     const vectorStore: QdrantVectorStore = await QdrantVectorStore.fromDocuments(docs, embeddings, {
-        url: "http://localhost:6333",
+        client,
         collectionName: "NotebookLM-vectorspace"
     });
 
@@ -75,7 +76,7 @@ export const csvIndexing = async (filepath: string) => {
     }
 
     const vectorStore: QdrantVectorStore = await QdrantVectorStore.fromExistingCollection(embeddings, {
-        url: "http://localhost:6333",
+        client,
         collectionName: "NotebookLM-vectorspace"
     });
 
@@ -95,7 +96,7 @@ export const retrieval = async (userQuery: string) => {
     });
 
     const vectorStore: QdrantVectorStore = await QdrantVectorStore.fromExistingCollection(embeddings, {
-        url: "http://localhost:6333",
+        client,
         collectionName: "NotebookLM-vectorspace"
     });
 
