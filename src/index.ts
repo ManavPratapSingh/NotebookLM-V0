@@ -26,6 +26,12 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Log every request to help debugging
+app.use((req, res, next) => {
+    console.log(`Incoming Request: ${req.method} ${req.url}`);
+    next();
+});
+
 app.use("/api" , uploadRouter);
 app.use("/api/rag" , ragRouter);
 
@@ -38,6 +44,6 @@ app.use((err: any, req: any, res: any, next: any) => {
     });
 });
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+app.listen(Number(port), "0.0.0.0", () => {
+    console.log(`Server is running on port ${port} and bound to 0.0.0.0`);
 });
