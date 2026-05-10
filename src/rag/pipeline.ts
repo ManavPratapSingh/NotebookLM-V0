@@ -19,7 +19,7 @@ export const indexing = async (filepath: string) => {
 
     const embeddings: GoogleGenerativeAIEmbeddings = new GoogleGenerativeAIEmbeddings({
         apiKey: API_KEY,
-        model: "gemini-embedding-004",
+        model: "text-embedding-004",
     });
 
     const vectorStore: QdrantVectorStore = await QdrantVectorStore.fromDocuments(docs, embeddings, {
