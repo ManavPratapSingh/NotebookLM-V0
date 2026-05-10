@@ -2,9 +2,18 @@ import multer from "multer";
 
 import path from "path";
 
+import fs from "fs";
+
+const storageDir = path.join(process.cwd(), "file_storage");
+
+// Ensure storage directory exists
+if (!fs.existsSync(storageDir)) {
+    fs.mkdirSync(storageDir, { recursive: true });
+}
+
 const storage: multer.StorageEngine = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, path.join(process.cwd(), "src", "uploads", "assets"))
+        cb(null, storageDir)
     },
     filename: (req, file, cb) => {
         cb(null, Date.now() + "-" + file.originalname);
