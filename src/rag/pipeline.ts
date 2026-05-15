@@ -4,7 +4,7 @@ dotenv.config();
 const API_KEY: string | undefined = process.env.OPENROUTER_API_KEY;
 if (!API_KEY) throw new Error("API Key not found");
 
-import { GenerateContentResponse, GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { CSVLoader } from "@langchain/community/document_loaders/fs/csv";
 import type { Document } from "@langchain/core/documents";
@@ -117,21 +117,20 @@ export const generation = async (retrievedDocuments: Document[], userQuery: stri
 
        context : ${JSON.stringify(retrievedDocuments)}`
 
-    const genai: GoogleGenAI = new GoogleGenAI({
+    const openai: OpenAI = new OpenAI({
         apiKey: API_KEY,
-    })
+        baseURL: "https://openrouter.ai/api/v1",
+    });
 
-    const response: GenerateContentResponse = await genai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: [
-            { role: "user", parts: [{ text: userQuery }] }
+    const response = await openai.chat.completions.create({
+        model: "google/gemini-2.5-flash",
+        messages: [
+            { role: "system", content: system_prompt },
+            { role: "user", content: userQuery },
         ],
-        config : {
-            systemInstruction: system_prompt,
-        }
-    })
+    });
 
-    return response.text;
+    return response.choices[0]?.message?.content ?? undefined;
 }
 
 export const queryPipeline = async (userQuery: string) => {
