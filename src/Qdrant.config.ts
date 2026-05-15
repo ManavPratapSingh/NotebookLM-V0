@@ -1,5 +1,5 @@
 import * as dotenv from "dotenv";
-dotenv.config();
+dotenv.config({ path: ".env.local" });
 
 const API_KEY : string | undefined = process.env.QDRANT_API_KEY;
 if (!API_KEY) throw new Error("QDRANT_API_KEY not found");
