@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
-const API_KEY: string | undefined = process.env.GEMINI_API_KEY;
+const API_KEY: string | undefined = process.env.OPENROUTER_API_KEY;
 if (!API_KEY) throw new Error("API Key not found");
 
 import { GenerateContentResponse, GoogleGenAI } from "@google/genai";
@@ -9,18 +9,23 @@ import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { CSVLoader } from "@langchain/community/document_loaders/fs/csv";
 import type { Document } from "@langchain/core/documents";
 import type { VectorStoreRetriever } from "@langchain/core/vectorstores";
-import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
+import { OpenAIEmbeddings } from "@langchain/openai";
 import { QdrantVectorStore } from "@langchain/qdrant";
 import { client } from "../Qdrant.config.js";
+
+const getEmbeddings = (): OpenAIEmbeddings => new OpenAIEmbeddings({
+    openAIApiKey: API_KEY,
+    modelName: "text-embedding-3-small",
+    configuration: {
+        baseURL: "https://openrouter.ai/api/v1",
+    },
+});
 
 export const indexing = async (filepath: string) => {
     const loader: PDFLoader = new PDFLoader(filepath);
     const docs: Document[] = await loader.load();
 
-    const embeddings: GoogleGenerativeAIEmbeddings = new GoogleGenerativeAIEmbeddings({
-        apiKey: API_KEY,
-        model: "gemini-embedding-001",
-    });
+    const embeddings: OpenAIEmbeddings = getEmbeddings();
 
     const vectorStore: QdrantVectorStore = await QdrantVectorStore.fromDocuments(docs, embeddings, {
         client,
@@ -47,10 +52,7 @@ export const csvIndexing = async (filepath: string) => {
     // Log a sample so we can diagnose content issues
     console.log(`Sample doc[0] pageContent (first 300 chars):\n"${docs[0] && docs[0].pageContent.substring(0, 300)}"`);
 
-    const embeddings: GoogleGenerativeAIEmbeddings = new GoogleGenerativeAIEmbeddings({
-        apiKey: API_KEY,
-        model: "gemini-embedding-001",
-    });
+    const embeddings: OpenAIEmbeddings = getEmbeddings();
 
     // Manually embed first so we can inspect & filter 0-dim vectors
     const texts: string[] = docs.map(d => d.pageContent);
@@ -58,7 +60,7 @@ export const csvIndexing = async (filepath: string) => {
 
     console.log(`Embedding dimensions per doc: ${vectors.map(v => v.length).join(", ")}`);
 
-    // Keep only docs whose embedding has the expected dimension (3072 for gemini-embedding-001)
+    // Keep only docs whose embedding has the expected dimension (1536 for text-embedding-3-small)
     const validPairs: { doc: Document; vector: number[] }[] = [];
     for (let i = 0; i < docs.length; i++) {
         const vec = vectors[i];
@@ -90,10 +92,7 @@ export const csvIndexing = async (filepath: string) => {
 }
 
 export const retrieval = async (userQuery: string) => {
-    const embeddings: GoogleGenerativeAIEmbeddings = new GoogleGenerativeAIEmbeddings({
-        apiKey : API_KEY,
-        model: "gemini-embedding-001",
-    });
+    const embeddings: OpenAIEmbeddings = getEmbeddings();
 
     const vectorStore: QdrantVectorStore = await QdrantVectorStore.fromExistingCollection(embeddings, {
         client,
